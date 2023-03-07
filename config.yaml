@@ -1,0 +1,5 @@
+host: "192.168.50.50:2379"
+ca: "/Users/inksnw/Desktop/etcdviewer/ca.pem"
+cert: "/Users/inksnw/Desktop/etcdviewer/member-node1.pem"
+key: "/Users/inksnw/Desktop/etcdviewer/member-node1-key.pem"
+
