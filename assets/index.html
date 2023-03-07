@@ -1,0 +1,35 @@
+<html lang="">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet"
+          href="https://cdn.digitalmaker.pwchk.com/1.0/FrontEnd/lib/jquery-easyui-1.5.3/themes/metro/easyui.css">
+    <link rel="stylesheet"
+          href="https://cdn.digitalmaker.pwchk.com/1.0/FrontEnd/lib/jquery-easyui-1.5.3/themes/icon.css">
+    <link rel="stylesheet" href="./style.css">
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+    <script src="https://cdn.digitalmaker.pwchk.com/1.0/FrontEnd/lib/jquery-easyui-1.5.3/jquery.easyui.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ace-builds@1.15.3/src-noconflict/ace.js"></script>
+    <title></title>
+</head>
+<body style="overflow: hidden;">
+<div style="margin:20px 0;"></div>
+<div id="elayout" class="easyui-layout" style="width:100%;height:550px;">
+    <div id="p" data-options="region:'west',tools:'#westTools'" title="Nodes" style="width:30%;padding:10px">
+        <ul id="etree" class="easyui-tree"></ul>
+    </div>
+    <div data-options="region:'center',tools:'#centerTools',footer:'#footer'" title="/" spellcheck="false"
+         style="padding:10px;overflow:hidden;">
+        <div id="value"></div>
+    </div>
+</div>
+
+<div id="footer" style="padding:5px;color:#777;">&nbsp;</div>
+
+<div style="text-align:right;color:#BDBDBD;margin-top:2px;">
+    <span id="statusVersion"></span>
+    <span id="statusSize" style="margin-left: 10px;"></span>
+    <span id="statusMember" style="margin-left: 10px;"></span>
+</div>
+<script src="my.js"></script>
+</body>
+</html>

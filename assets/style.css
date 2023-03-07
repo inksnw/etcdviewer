@@ -1,0 +1,16 @@
+body {
+    font-family: verdana, helvetica, arial, sans-serif;
+    padding: 20px;
+    font-size: 12px;
+    margin: 0;
+}
+
+#value {
+    position: absolute;
+    top: 40px;
+    right: 15px;
+    bottom: 40px;
+    left: 15px;
+    border: 1px solid #ddd;
+    font-size: 13px !important;
+}

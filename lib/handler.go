@@ -1,60 +1,19 @@
 package lib
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"github.com/dustin/go-humanize"
 	"github.com/gin-gonic/gin"
-	"go.etcd.io/etcd/client/pkg/v3/transport"
 	clientv3 "go.etcd.io/etcd/client/v3"
-	"google.golang.org/grpc"
-	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
-	jsonserializer "k8s.io/apimachinery/pkg/runtime/serializer/json"
-	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/kubectl/pkg/scheme"
 	"log"
 	"strings"
-	"time"
 )
 
 var client *clientv3.Client
 var config Config
-
-func getTTL(cli *clientv3.Client, lease int64) int64 {
-	resp, err := cli.Lease.TimeToLive(context.Background(), clientv3.LeaseID(lease))
-	if err != nil {
-		return 0
-	}
-	if resp.TTL == -1 {
-		return 0
-	}
-	return resp.TTL
-}
-
-func InitClient() {
-	InitConfig()
-	tlsInfo := transport.TLSInfo{
-		CertFile:      config.Cert,
-		KeyFile:       config.Key,
-		TrustedCAFile: config.CA,
-	}
-	tlsConfig, err := tlsInfo.ClientConfig()
-	Check(err)
-	conf := clientv3.Config{
-		Endpoints:          []string{config.Host},
-		DialTimeout:        time.Second * 5,
-		TLS:                tlsConfig,
-		DialOptions:        []grpc.DialOption{grpc.WithBlock()},
-		MaxCallSendMsgSize: 2 * 1024 * 1024,
-	}
-	client, err = clientv3.New(conf)
-	if err != nil {
-		panic(err)
-	}
-}
+var sch *runtime.Scheme
 
 func Connect(c *gin.Context) {
 	info := make(map[string]string)
@@ -81,45 +40,30 @@ func Get(c *gin.Context) {
 	key := c.Query("key")
 	log.Println("GET", "v3", key)
 	resp, err := client.Get(context.Background(), key)
-	kv := resp.Kvs[0]
-	sch := runtime.NewScheme()
-	clientgoscheme.AddToScheme(sch)
-	apiextv1beta1.AddToScheme(sch)
-	decoder := serializer.NewCodecFactory(sch).UniversalDeserializer()
-	encoder := jsonserializer.NewSerializer(jsonserializer.DefaultMetaFactory, scheme.Scheme, scheme.Scheme, true)
-	obj, _, err := decoder.Decode(kv.Value, nil, nil)
-	var value string
 	if err != nil {
-		value = string(kv.Value)
-		err = nil
-	} else {
-		var buff bytes.Buffer
-		err = encoder.Encode(obj, &buff)
-		if err != nil {
-			panic(err)
-		}
-		value = buff.String()
+		ResultErr(c, err)
+		return
 	}
-
+	kv := resp.Kvs[0]
 	node := make(map[string]any)
 	node["key"] = string(kv.Key)
-	node["value"] = value
+	node["value"] = decode(kv.Value)
 	node["dir"] = false
 	node["ttl"] = getTTL(client, kv.Lease)
 	node["createdIndex"] = kv.CreateRevision
 	node["modifiedIndex"] = kv.ModRevision
 	data["node"] = node
 	if err != nil {
-		data["errorCode"] = 500
-		data["message"] = err.Error()
+		ResultErr(c, err)
+		return
 	}
 	c.JSON(200, data)
 }
 
 func GetPath(c *gin.Context) {
-	originKey := c.Query("key")
+	key := c.Query("key")
 
-	log.Println("GET", "v3", originKey)
+	log.Println("GET", "v3", key)
 	var (
 		data = make(map[string]interface{})
 		all  = make(map[int][]map[string]interface{})
@@ -131,22 +75,19 @@ func GetPath(c *gin.Context) {
 		err   error
 	)
 
-	if originKey != "/" {
-		presp, err = client.Get(context.Background(), originKey, clientv3.WithKeysOnly())
+	if key != "/" {
+		presp, err = client.Get(context.Background(), key, clientv3.WithKeysOnly())
 		if err != nil {
-			data["errorCode"] = 500
-			data["message"] = err.Error()
-			c.JSON(500, data)
-			return
+			ResultErr(c, err)
 		}
 	}
-	if originKey == "/" {
+	if key == "/" {
 		min = 1
 	} else {
-		min = len(strings.Split(originKey, "/"))
+		min = len(strings.Split(key, "/"))
 	}
 	max = min
-	all[min] = []map[string]interface{}{{"key": originKey}}
+	all[min] = []map[string]interface{}{{"key": key}}
 	if presp != nil && presp.Count != 0 {
 		all[min][0]["value"] = string(presp.Kvs[0].Value)
 		all[min][0]["ttl"] = getTTL(client, presp.Kvs[0].Lease)
@@ -155,13 +96,10 @@ func GetPath(c *gin.Context) {
 	}
 	all[min][0]["nodes"] = make([]map[string]interface{}, 0)
 
-	key := originKey
 	var resp *clientv3.GetResponse
 	resp, err = client.Get(context.Background(), key, clientv3.WithPrefix(), clientv3.WithSort(clientv3.SortByKey, clientv3.SortAscend), clientv3.WithKeysOnly())
 	if err != nil {
-		data["errorCode"] = 500
-		data["message"] = err.Error()
-		c.JSON(500, data)
+		ResultErr(c, err)
 		return
 	}
 
@@ -206,12 +144,8 @@ func GetPath(c *gin.Context) {
 			}
 		}
 	}
-
-	// parent-child mapping
 	minus := len(strings.Split(key, "/"))
 	fmt.Printf("此时的max: %d min: %d key: %s minus: %d\n", max, min, key, minus)
-
-	//max = minus + 2
 
 	for i := max; i > min; i-- {
 		for _, a := range all[i] {

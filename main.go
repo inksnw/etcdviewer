@@ -6,11 +6,12 @@ import (
 )
 
 func main() {
+	lib.InitConfig()
 	lib.InitClient()
+	lib.InitSch()
 	r := gin.Default()
-	r.Static("/etcdkeeper", "./assets/etcdkeeper")
-	r.Static("/framework", "./assets/framework")
-	r.POST("/v3/connect", lib.Connect)
+	r.Static("/ui", "./assets/")
+	r.GET("/v3/connect", lib.Connect)
 	r.GET("/v3/get", lib.Get)
 	r.GET("/v3/getpath", lib.GetPath)
 	r.Run()
