@@ -57,36 +57,46 @@ function resetValue() {
     $('#footer').html('&nbsp;');
 }
 
+function format() {
+    val = JSON.parse(editor.getValue());
+    editor.setValue(JSON.stringify(val, null, 4));
+    editor.getSession().setMode('ace/mode/' + 'json');
+    editor.clearSelection();
+    editor.navigateFileStart();
+}
+
 function showNode(node) {
     $('#elayout').layout('panel', 'center').panel('setTitle', node.path);
     editor.getSession().setValue('');
     if (node.dir === false) {
         editor.setReadOnly(false);
         $.ajax({
-            type: 'GET',
-            timeout: timeout,
-            url: '/v3/get',
-            data: {'key': node.path},
-            async: true,
-            dataType: 'json',
-            success: function (data) {
-                if (data.errorCode) {
-                    $('#etree').tree('remove', node.target);
-                    console.log(data.message);
-                    resetValue()
-                } else {
-                    editor.getSession().setValue(data.node.value);
-                    var ttl = 0;
-                    if (data.node.ttl) {
-                        ttl = data.node.ttl;
+                type: 'GET',
+                timeout: timeout,
+                url: '/v3/get',
+                data: {'key': node.path},
+                async: true,
+                dataType: 'json',
+                success: function (data) {
+                    if (data.errorCode) {
+                        $('#etree').tree('remove', node.target);
+                        console.log(data.message);
+                        resetValue()
+                    } else {
+                        editor.getSession().setValue(data.node.value);
+                        var ttl = 0;
+                        if (data.node.ttl) {
+                            ttl = data.node.ttl;
+                        }
+                        format()
+                        changeFooter(ttl, data.node.createdIndex, data.node.modifiedIndex);
                     }
-                    changeFooter(ttl, data.node.createdIndex, data.node.modifiedIndex);
+                },
+                error: function (err) {
+                    $.messager.alert('Error', $.toJSON(err), 'error');
                 }
-            },
-            error: function (err) {
-                $.messager.alert('Error', $.toJSON(err), 'error');
             }
-        });
+        );
     } else {
         if (node.children.length > 0) {
             $('#etree').tree(node.state === 'closed' ? 'expand' : 'collapse', node.target);
@@ -105,6 +115,7 @@ function showNode(node) {
             dataType: 'json',
             success: function (data) {
                 if (data.node.value) {
+
                     editor.getSession().setValue(data.node.value);
                     changeFooter(data.node.ttl, data.node.createdIndex, data.node.modifiedIndex);
                 }
