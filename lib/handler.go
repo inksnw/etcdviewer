@@ -2,12 +2,11 @@ package lib
 
 import (
 	"context"
-	"fmt"
 	"github.com/dustin/go-humanize"
 	"github.com/gin-gonic/gin"
+	"github.com/phuslu/log"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"k8s.io/apimachinery/pkg/runtime"
-	"log"
 	"strings"
 )
 
@@ -38,7 +37,7 @@ func Connect(c *gin.Context) {
 func Get(c *gin.Context) {
 	data := make(map[string]any)
 	key := c.Query("key")
-	log.Println("GET", "v3", key)
+	log.Info().Msgf("请求的key为: %s", key)
 	resp, err := client.Get(context.Background(), key)
 	if err != nil {
 		ResultErr(c, err)
@@ -63,7 +62,7 @@ func Get(c *gin.Context) {
 func GetPath(c *gin.Context) {
 	key := c.Query("key")
 
-	log.Println("GET", "v3", key)
+	log.Info().Msgf("请求的路径为: %s", key)
 	var (
 		data = make(map[string]interface{})
 		all  = make(map[int][]map[string]interface{})
@@ -96,8 +95,7 @@ func GetPath(c *gin.Context) {
 	}
 	all[min][0]["nodes"] = make([]map[string]interface{}, 0)
 
-	var resp *clientv3.GetResponse
-	resp, err = client.Get(context.Background(), key, clientv3.WithPrefix(), clientv3.WithSort(clientv3.SortByKey, clientv3.SortAscend), clientv3.WithKeysOnly())
+	resp, err := client.Get(context.Background(), key, clientv3.WithPrefix(), clientv3.WithSort(clientv3.SortByKey, clientv3.SortAscend), clientv3.WithKeysOnly())
 	if err != nil {
 		ResultErr(c, err)
 		return
@@ -144,8 +142,6 @@ func GetPath(c *gin.Context) {
 			}
 		}
 	}
-	minus := len(strings.Split(key, "/"))
-	fmt.Printf("此时的max: %d min: %d key: %s minus: %d\n", max, min, key, minus)
 
 	for i := max; i > min; i-- {
 		for _, a := range all[i] {

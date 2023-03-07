@@ -1,3 +1,5 @@
+k8s的etcd数据查看工具
+
 ```bash
-./main -cacert ./ca.pem -key ./member-node1-key.pem -cert ./member-node1.pem
+curl http://0.0.0.0:8080/ui/
 ```

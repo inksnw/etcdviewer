@@ -5,6 +5,7 @@ go 1.19
 require (
 	github.com/dustin/go-humanize v1.0.1
 	github.com/gin-gonic/gin v1.9.0
+	github.com/phuslu/log v1.0.83
 	go.etcd.io/etcd/client/pkg/v3 v3.5.7
 	go.etcd.io/etcd/client/v3 v3.5.7
 	google.golang.org/grpc v1.53.0
@@ -12,7 +13,6 @@ require (
 	k8s.io/apiextensions-apiserver v0.26.2
 	k8s.io/apimachinery v0.26.2
 	k8s.io/client-go v0.26.2
-	k8s.io/kubectl v0.26.2
 )
 
 require (
