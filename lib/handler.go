@@ -62,7 +62,6 @@ func Get(c *gin.Context) {
 
 func GetPath(c *gin.Context) {
 	key := c.Query("key")
-
 	log.Info().Msgf("请求的路径为: %s", key)
 	var (
 		data = make(map[string]interface{})
@@ -70,30 +69,27 @@ func GetPath(c *gin.Context) {
 		min  int
 		max  int
 	)
-	var (
-		presp *clientv3.GetResponse
-		err   error
-	)
+
+	if key == "/" {
+		min = 1
+	}
 
 	if key != "/" {
-		presp, err = client.Get(context.Background(), key, clientv3.WithKeysOnly())
+		presp, err := client.Get(context.Background(), key, clientv3.WithKeysOnly())
 		if err != nil {
 			ResultErr(c, err)
 		}
-	}
-	if key == "/" {
-		min = 1
-	} else {
 		min = len(strings.Split(key, "/"))
+		if presp.Count != 0 {
+			all[min][0]["value"] = string(presp.Kvs[0].Value)
+			all[min][0]["ttl"] = getTTL(client, presp.Kvs[0].Lease)
+			all[min][0]["createdIndex"] = presp.Kvs[0].CreateRevision
+			all[min][0]["modifiedIndex"] = presp.Kvs[0].ModRevision
+		}
 	}
+
 	max = min
 	all[min] = []map[string]interface{}{{"key": key}}
-	if presp != nil && presp.Count != 0 {
-		all[min][0]["value"] = string(presp.Kvs[0].Value)
-		all[min][0]["ttl"] = getTTL(client, presp.Kvs[0].Lease)
-		all[min][0]["createdIndex"] = presp.Kvs[0].CreateRevision
-		all[min][0]["modifiedIndex"] = presp.Kvs[0].ModRevision
-	}
 	all[min][0]["nodes"] = make([]map[string]interface{}, 0)
 
 	resp, err := client.Get(context.Background(), key, clientv3.WithPrefix(), clientv3.WithSort(clientv3.SortByKey, clientv3.SortAscend), clientv3.WithKeysOnly())
@@ -115,13 +111,6 @@ func GetPath(c *gin.Context) {
 			node := map[string]interface{}{"key": k}
 			if node["key"].(string) == string(kv.Key) {
 				node["value"] = string(kv.Value)
-				if key == string(kv.Key) {
-					node["ttl"] = getTTL(client, kv.Lease)
-				} else {
-					node["ttl"] = 0
-				}
-				node["createdIndex"] = kv.CreateRevision
-				node["modifiedIndex"] = kv.ModRevision
 			}
 			level := len(strings.Split(k, "/"))
 			if level > max {

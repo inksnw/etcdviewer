@@ -65,83 +65,91 @@ function format() {
     editor.navigateFileStart();
 }
 
-function showNode(node) {
-    $('#elayout').layout('panel', 'center').panel('setTitle', node.path);
-    editor.getSession().setValue('');
-    if (node.dir === false) {
-        editor.setReadOnly(false);
-        $.ajax({
-                type: 'GET',
-                timeout: timeout,
-                url: '/v3/get',
-                data: {'key': node.path},
-                async: true,
-                dataType: 'json',
-                success: function (data) {
-                    if (data.errorCode) {
-                        $('#etree').tree('remove', node.target);
-                        console.log(data.message);
-                        resetValue()
-                    } else {
-                        editor.getSession().setValue(data.node.value);
-                        var ttl = 0;
-                        if (data.node.ttl) {
-                            ttl = data.node.ttl;
-                        }
-                        format()
-                        changeFooter(ttl, data.node.createdIndex, data.node.modifiedIndex);
-                    }
-                },
-                error: function (err) {
-                    $.messager.alert('Error', $.toJSON(err), 'error');
-                }
+function getpath(node) {
+    if (node.children.length > 0) {
+        $('#etree').tree(node.state === 'closed' ? 'expand' : 'collapse', node.target);
+    }
+    $('#footer').html('&nbsp;');
+    // clear child node
+    var children = $('#etree').tree('getChildren', node.target);
+    var url = '';
+    url = '/v3/getpath';
+    $.ajax({
+        type: 'GET',
+        timeout: timeout,
+        url: url,
+        data: {'key': node.path, 'prefix': 'true'},
+        async: true,
+        dataType: 'json',
+        success: function (data) {
+            if (data.node.value) {
+
+                editor.getSession().setValue(data.node.value);
+                changeFooter(data.node.ttl, data.node.createdIndex, data.node.modifiedIndex);
             }
-        );
-    } else {
-        if (node.children.length > 0) {
-            $('#etree').tree(node.state === 'closed' ? 'expand' : 'collapse', node.target);
+            let arr = [];
+
+            if (data.node.nodes) {
+                // refresh child node
+                for (var i in data.node.nodes) {
+                    var newData = getNode(data.node.nodes[i]);
+                    arr.push(newData);
+                }
+                $('#etree').tree('append', {
+                    parent: node.target,
+                    data: arr
+                });
+            }
+
+            for (var n in children) {
+                $('#etree').tree('remove', children[n].target);
+            }
+
+        },
+        error: function (err) {
+            $.messager.alert('Error', $.toJSON(err), 'error');
         }
-        $('#footer').html('&nbsp;');
-        // clear child node
-        var children = $('#etree').tree('getChildren', node.target);
-        var url = '';
-        url = '/v3/getpath';
-        $.ajax({
+    });
+}
+
+function get(node) {
+    editor.setReadOnly(false);
+    $.ajax({
             type: 'GET',
             timeout: timeout,
-            url: url,
-            data: {'key': node.path, 'prefix': 'true'},
+            url: '/v3/get',
+            data: {'key': node.path},
             async: true,
             dataType: 'json',
             success: function (data) {
-                if (data.node.value) {
-
+                if (data.errorCode) {
+                    $('#etree').tree('remove', node.target);
+                    console.log(data.message);
+                    resetValue()
+                } else {
                     editor.getSession().setValue(data.node.value);
-                    changeFooter(data.node.ttl, data.node.createdIndex, data.node.modifiedIndex);
-                }
-                let arr = [];
-
-                if (data.node.nodes) {
-                    // refresh child node
-                    for (var i in data.node.nodes) {
-                        var newData = getNode(data.node.nodes[i]);
-                        arr.push(newData);
+                    var ttl = 0;
+                    if (data.node.ttl) {
+                        ttl = data.node.ttl;
                     }
-                    $('#etree').tree('append', {
-                        parent: node.target,
-                        data: arr
-                    });
+                    format()
+                    changeFooter(ttl, data.node.createdIndex, data.node.modifiedIndex);
                 }
-
-                for (var n in children) {
-                    $('#etree').tree('remove', children[n].target);
-                }
-
             },
             error: function (err) {
                 $.messager.alert('Error', $.toJSON(err), 'error');
             }
-        });
+        }
+    );
+}
+
+function showNode(node) {
+    $('#elayout').layout('panel', 'center').panel('setTitle', node.path);
+    editor.getSession().setValue('');
+    if (node.dir === false) {
+        get(node);
+    } else {
+        getpath(node);
     }
 }
 
