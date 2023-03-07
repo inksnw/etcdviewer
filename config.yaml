@@ -1,5 +1,5 @@
-host: "192.168.50.50:2379"
+host: "192.168.50.50:2379,192.168.50.51:2379,192.168.50.51:2379"
 ca: "./ca.pem"
-cert: "./member-node1.pem"
-key: "./member-node1-key.pem"
+cert: "./admin-node1.pem"
+key: "./admin-node1-key.pem"
 

@@ -16,7 +16,8 @@ var sch *runtime.Scheme
 
 func Connect(c *gin.Context) {
 	info := make(map[string]string)
-	status, err := client.Status(context.Background(), config.Host)
+	host := strings.Split(config.Host, ",")[0]
+	status, err := client.Status(context.Background(), host)
 	Check(err)
 	memberList, err := client.MemberList(context.Background())
 	Check(err)

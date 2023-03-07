@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	jsonserializer "k8s.io/apimachinery/pkg/runtime/serializer/json"
 	"k8s.io/client-go/kubernetes/scheme"
+	"strings"
 	"time"
 )
 
@@ -64,8 +65,9 @@ func InitClient() {
 	}
 	tlsConfig, err := tlsInfo.ClientConfig()
 	Check(err)
+	hosts := strings.Split(config.Host, ",")
 	conf := clientv3.Config{
-		Endpoints:          []string{config.Host},
+		Endpoints:          hosts,
 		DialTimeout:        time.Second * 5,
 		TLS:                tlsConfig,
 		DialOptions:        []grpc.DialOption{grpc.WithBlock()},
