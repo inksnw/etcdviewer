@@ -7,11 +7,7 @@ editor.$blockScrolling = Infinity;
 
 
 $(document).ready(function () {
-    $('#etree').tree({
-        animate: true,
-        onClick: showNode,
-        onContextMenu: showMenu
-    });
+    $('#etree').tree({animate: true, onClick: showNode});
     connect();
 });
 
@@ -26,9 +22,6 @@ function connect() {
             $('#statusVersion').html('ETCD version:' + data.info.version);
             $('#statusSize').html('Size:' + data.info.size)
             $('#statusMember').html('Member name:' + data.info.name)
-        },
-        error: function (err) {
-            $.messager.alert('Error', $.toJSON(err), 'error');
         }
     });
     reload();
@@ -53,14 +46,13 @@ function reload() {
 function resetValue() {
     $('#elayout').layout('panel', 'center').panel('setTitle', separator);
     editor.getSession().setValue('');
-    editor.setReadOnly(false);
     $('#footer').html('&nbsp;');
 }
 
 function format() {
-    val = JSON.parse(editor.getValue());
+    let val = JSON.parse(editor.getValue());
     editor.setValue(JSON.stringify(val, null, 4));
-    editor.getSession().setMode('ace/mode/' + 'json');
+    editor.getSession().setMode('ace/mode/json');
     editor.clearSelection();
     editor.navigateFileStart();
 }
@@ -70,50 +62,31 @@ function getpath(node) {
         $('#etree').tree(node.state === 'closed' ? 'expand' : 'collapse', node.target);
     }
     $('#footer').html('&nbsp;');
-    // clear child node
-    var children = $('#etree').tree('getChildren', node.target);
-    var url = '';
-    url = '/v3/getpath';
+    let children = $('#etree').tree('getChildren', node.target);
     $.ajax({
         type: 'GET',
         timeout: timeout,
-        url: url,
+        url: '/v3/getpath',
         data: {'key': node.path, 'prefix': 'true'},
         async: true,
         dataType: 'json',
         success: function (data) {
-            if (data.node.value) {
-
-                editor.getSession().setValue(data.node.value);
-                changeFooter(data.node.ttl, data.node.createdIndex, data.node.modifiedIndex);
-            }
             let arr = [];
-
             if (data.node.nodes) {
-                // refresh child node
-                for (var i in data.node.nodes) {
-                    var newData = getNode(data.node.nodes[i]);
+                for (let i in data.node.nodes) {
+                    let newData = getNode(data.node.nodes[i]);
                     arr.push(newData);
                 }
-                $('#etree').tree('append', {
-                    parent: node.target,
-                    data: arr
-                });
+                $('#etree').tree('append', {parent: node.target, data: arr});
             }
-
-            for (var n in children) {
+            for (let n in children) {
                 $('#etree').tree('remove', children[n].target);
             }
-
-        },
-        error: function (err) {
-            $.messager.alert('Error', $.toJSON(err), 'error');
         }
     });
 }
 
 function get(node) {
-    editor.setReadOnly(false);
     $.ajax({
             type: 'GET',
             timeout: timeout,
@@ -122,22 +95,9 @@ function get(node) {
             async: true,
             dataType: 'json',
             success: function (data) {
-                if (data.errorCode) {
-                    $('#etree').tree('remove', node.target);
-                    console.log(data.message);
-                    resetValue()
-                } else {
-                    editor.getSession().setValue(data.node.value);
-                    var ttl = 0;
-                    if (data.node.ttl) {
-                        ttl = data.node.ttl;
-                    }
-                    format()
-                    changeFooter(ttl, data.node.createdIndex, data.node.modifiedIndex);
-                }
-            },
-            error: function (err) {
-                $.messager.alert('Error', $.toJSON(err), 'error');
+                editor.getSession().setValue(data.node.value);
+                format()
+                changeFooter(data.node.ttl, data.node.createdIndex, data.node.modifiedIndex);
             }
         }
     );
@@ -154,7 +114,7 @@ function showNode(node) {
 }
 
 function getNode(n) {
-    var path = n.key.split(separator);
+    let path = n.key.split(separator);
     let text = path[path.length - 1];
     const obj = {
         id: getId(),
@@ -169,22 +129,13 @@ function getNode(n) {
         obj.dir = true;
         obj.iconCls = 'icon-dir';
         if (n.nodes) {
-            for (var i in n.nodes) {
-                var rn = getNode(n.nodes[i]);
+            for (let i in n.nodes) {
+                let rn = getNode(n.nodes[i]);
                 obj.children.push(rn);
             }
         }
     }
     return obj
-}
-
-function showMenu(e, node) {
-    e.preventDefault();
-    $('#etree').tree('select', node.target);
-    $('#treeDirMenu').menu('show', {
-        left: e.pageX,
-        top: e.pageY
-    });
 }
 
 

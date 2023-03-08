@@ -18,9 +18,13 @@ import (
 
 func ResultErr(c *gin.Context, err error) {
 	data := make(map[string]any)
-	data["errorCode"] = 500
-	data["message"] = err.Error()
-	c.JSON(500, data)
+	if err != nil {
+		data["errorCode"] = 500
+		data["message"] = err.Error()
+		c.JSON(500, data)
+		return
+	}
+	c.JSON(200, data)
 }
 
 func decode(v []byte) (value string) {
