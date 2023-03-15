@@ -7,7 +7,6 @@ import (
 	"github.com/phuslu/log"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/json"
 	"strings"
 )
 
@@ -128,11 +127,6 @@ func GetPath(c *gin.Context) {
 			}
 		}
 	}
-	marshal, err := json.Marshal(all)
-	if err != nil {
-		return
-	}
-	log.Info().Msgf("all: %s", marshal)
 
 	for i := maxLevel; i > min; i-- {
 		for _, child := range all[i] {

@@ -70,12 +70,15 @@ func InitClient() {
 	tlsConfig, err := tlsInfo.ClientConfig()
 	Check(err)
 	hosts := strings.Split(config.Host, ",")
+
 	conf := clientv3.Config{
 		Endpoints:          hosts,
 		DialTimeout:        time.Second * 5,
-		TLS:                tlsConfig,
 		DialOptions:        []grpc.DialOption{grpc.WithBlock()},
 		MaxCallSendMsgSize: 2 * 1024 * 1024,
+	}
+	if config.CA != "" {
+		conf.TLS = tlsConfig
 	}
 	client, err = clientv3.New(conf)
 	Check(err)
