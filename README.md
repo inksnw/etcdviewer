@@ -1,4 +1,5 @@
-k8s的etcd数据查看工具
+k8s的etcd数据查看工具,参考自[https://github.com/evildecay/etcdkeeper](https://github.com/evildecay/etcdkeeper) 
+
 配置config.yaml后 go run main.go运行
 ```bash
 curl http://0.0.0.0:8080/ui/
