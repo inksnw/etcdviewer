@@ -1,4 +1,5 @@
-k8s的etcd数据查看工具,参考自[https://github.com/evildecay/etcdkeeper](https://github.com/evildecay/etcdkeeper) 
+k8s的etcd数据查看工具,参考自[https://github.com/evildecay/etcdkeeper](https://github.com/evildecay/etcdkeeper)  
+增加了k8s protobuf格式数据解析 
 
 配置config.yaml后 go run main.go运行
 ```bash
