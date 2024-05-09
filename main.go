@@ -14,7 +14,6 @@ func main() {
 	lib.InitSch()
 	r := gin.Default()
 	r.Static("/ui", "./assets/")
-	r.GET("/v3/connect", lib.Connect)
 	r.GET("/v3/get", lib.Get)
 	r.GET("/v3/getpath", lib.GetPath)
 	addr := "0.0.0.0:8000"
